@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- STABLE INDEPENDENT QR LIBRARY BUNDLE -->
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: #0b0d10; color: #fff; font-family: Arial, sans-serif; min-height: 100vh; }
+    .app { max-width: 520px; margin: auto; padding: 18px 15px 30px; }
+    .header { text-align: center; margin-bottom: 18px; }
+    .logo { width: 58px; height: 58px; margin: auto; border-radius: 18px; background: #fff; color: #111; display: flex; align-items: center; justify-content: center; font-size: 25px; font-weight: 900; }
+    h1 { margin: 12px 0 4px; font-size: 24px; }
+    .sub { color: #8e96a3; font-size: 13px; }
+    .card { background: #15181d; border: 1px solid #292e37; border-radius: 22px; padding: 16px; margin-bottom: 14px; }
+    label { display: block; color: #aab1bd; font-size: 12px; margin-bottom: 7px; }
+    input { width: 100%; padding: 15px; border-radius: 13px; border: 1px solid #343a45; background: #0c0f13; color: #fff; font-size: 16px; outline: none; }
+    input:focus { border-color: #fff; }
+    button { width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; }
+    .start { margin-top: 12px; background: #fff; color: #111; }
+    .stop { margin-top: 10px; background: #292e37; color: #fff; display: none; }
+    #reader { width: 100%; overflow: hidden; border-radius: 17px; background: #050607; border: none !important; min-height: 250px; }
+    #reader video { border-radius: 17px !important; width: 100% !important; object-fit: cover !important; }
+    .scan-text { text-align: center; color: #969eaa; font-size: 12px; margin-top: 12px; }
+    .result { display: none; border-radius: 22px; padding: 25px 18px; text-align: center; margin-top: 14px; }
+    .valid { background: #10291b; border: 1px solid #1d7540; }
+    .used { background: #351515; border: 1px solid #873434; }
+    .invalid { background: #321817; border: 1px solid #79312d; }
+    .verify { background: #322b12; border: 1px solid #806d22; }
+    .icon { width: 68px; height: 68px; margin: auto; border-radius: 50%; background: rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; }
+    .title { font-size: 24px; font-weight: 900; margin-top: 12px; }
+    .person { font-size: 18px; font-weight: 700; margin-top: 10px; }
+    .details { color: #b8bec7; font-size: 13px; line-height: 1.6; margin-top: 8px; }
+    .next { margin-top: 18px; background: #fff; color: #111; }
+    .error { color: #ff8c8c; text-align: center; font-size: 13px; line-height: 1.5; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">K</div>
+    <h1>KYS EVENT</h1>
+    <div class="sub">10 OCTOBER • 7 PM • MUMBAI</div>
+  </div>
+  
+  <div class="card">
+    <label>VOLUNTEER NAME</label>
+    <input id="volunteer" type="text" placeholder="Enter your name" autocomplete="name">
+    <button class="start" id="startBtn" onclick="startCamera()">📷 START SCANNER</button>
+    <button class="stop" id="stopBtn" onclick="stopCamera()">STOP CAMERA</button>
+    <div id="cameraError" class="error"></div>
+  </div>
+  
+  <div class="card" id="cameraCard" style="display:none;">
+    <div id="reader"></div>
+    <div class="scan-text">QR code ko box ke andar rakho</div>
+  </div>
+  
+  <div id="result" class="result">
+    <div id="icon" class="icon"></div>
+    <div id="title" class="title"></div>
+    <div id="person" class="person"></div>
+    <div id="details" class="details"></div>
+    <button class="next" onclick="nextScan()">SCAN NEXT TICKET</button>
+  </div>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "https://google.com";
+const SECURITY_KEY = "KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
+
+let scanner = null;
+let scanning = false;
+let processing = false;
+
+function startCamera() {
+  const volunteer = document.getElementById("volunteer").value.trim();
+  if (!volunteer) {
+    alert("Please enter volunteer name first.");
+    document.getElementById("volunteer").focus();
+    return;
+  }
+  
+  document.getElementById("cameraError").style.display = "none";
+  document.getElementById("cameraCard").style.display = "block";
+  document.getElementById("stopBtn").style.display = "block";
+  document.getElementById("startBtn").style.display = "none";
+
+  // Force delay bypass check for asynchronous safe load
+  if (typeof Html5Qrcode === "undefined") {
+    setTimeout(startCamera, 200);
+    return;
+  }
+
+  // Pure Native Sensor Layer request mapping
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices && devices.length > 0) {
+      let backCameraId = devices[0].id;
+      for (let device of devices) {
+        if (device.label.toLowerCase().includes("back") || device.label.toLowerCase().includes("environment")) {
+          backCameraId = device.id;
+          break;
+        }
+      }
+
+      scanner = new Html5Qrcode("reader");
+      scanner.start(
+        backCameraId,
+        { fps: 20, qrbox: (w, h) => ({ width: Math.floor(Math.min(w, h) * 0.75), height: Math.floor(Math.min(w, h) * 0.75) }) },
+        function(decodedText) {
+          if (processing) return;
+          processing = true;
+          processQR(decodedText);
+        },
+        function(errorMessage) {}
+      ).then(() => {
+        scanning = true;
+      }).catch(err => {
+        handleInitError(err);
+      });
+    } else {
+      handleInitError("No hardware camera sensors mapping found.");
+    }
+  }).catch(err => {
+    handleInitError(err);
+  });
+}
+
+function handleInitError(errorText) {
+  document.getElementById("cameraError").style.display = "block";
+  document.getElementById("cameraError").innerHTML = "System Error: " + errorText;
+  document.getElementById("cameraCard").style.display = "none";
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("startBtn").style.display = "block";
+}
+
+async function stopCamera() {
+  if (scanner && scanning) {
+    try { await scanner.stop(); } catch(e) {}
+  }
+  scanning = false;
+  document.getElementById("stopBtn").style.display = "none";
+  document.getElementById("cameraCard").style.display = "none";
+  document.getElementById("startBtn").style.display = "block";
+}
+
+function processQR(value) {
+  stopCamera();
+  showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
+  
+  const token = extractToken(value);
+  if (!token) {
+    processing = false;
+    showResult("invalid", "INVALID QR", "", "Valid KYS EVENT ticket scan karo.");
+    return;
+  }
+  
+  const volunteer = document.getElementById("volunteer").value.trim();
+  
+  const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
+  const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
+
+  window[callbackName] = function(response) {
+    processing = false;
+    document.getElementById(callbackName).remove();
+    delete window[callbackName];
+    showResponse(response);
+  };
+
+  const script = document.createElement("script");
+  script.id = callbackName;
+  script.src = finalApiUrl;
+  script.onerror = function() {
+    processing = false;
+    showResult("invalid", "SYSTEM ERROR", "", "Network check karke dobara scan karein.");
+  };
+  document.body.appendChild(script);
+}
+
+function extractToken(value) {
+  value = String(value || "").trim();
+  if (!value) return "";
+  try {
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      const url = new URL(value);
+      return url.searchParams.get("token") || "";
+    }
+  } catch(e) {}
+  return value;
+}
+
+function showResponse(response) {
+  if (!response) {
+    showResult("invalid", "INVALID TICKET", "", "Ticket information nahi mili.");
+    return;
+  }
+  if (response.status === "USED" && response.message === "ALREADY CHECKED IN") {
+    showResult("used", "ALREADY CHECKED IN", response.name || "", "Checked in by: " + (response.checkedInBy || "Unknown"));
+    return;
+  }
+  if (response.status === "NOT VALID") {
+    showResult("verify", "PAYMENT NOT VERIFIED", response.name || "", response.message || "");
+    return;
+  }
+  if (response.status === "INVALID") {
+    showResult("invalid", "INVALID TICKET", "", response.message || "");
+    return;
+  }
+  if (response.ok === true) {
+    showResult("valid", "ENTRY ALLOWED", response.name || "", "Ticket #" + response.ticketNumber + " of " + response.quantity + "<br>Booking ID: " + response.bookingId);
+    return;
+  }
+  showResult("invalid", "INVALID TICKET", "", response.message || "Unknown error.");
+}
+
+function showResult(type, title, person, details) {
+  const result = document.getElementById("result");
+  result.className = "result " + type;
+  document.getElementById("icon").innerHTML = type === "valid" ? "✓" : type === "used" ? "!" : type === "verify" ? "⏳" : "×";
+  document.getElementById("title").textContent = title;
+  document.getElementById("person").textContent = person || "";
+  document.getElementById("details").innerHTML = details || "";
+  result.style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function nextScan() {
+  processing = false;
+  document.getElementById("result").style.display = "none";
+  startCamera();
+}
+</script>
+</body>
+</html>
