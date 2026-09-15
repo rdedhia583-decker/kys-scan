@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
-<title>KYS EVENT - QR Ticket Check-In</title>
+<title>KYS EVENT - QR Ticket Check-In • FIXED</title>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -559,7 +559,7 @@ function checkIn(token){
 
       },
 
-      15000
+      8000
     );
 
 
@@ -612,7 +612,7 @@ function handleResponse(data){
     .toUpperCase();
 
 
-  /* SUCCESS — FIRST SCAN */
+  /* FIRST SCAN SUCCESS */
 
   if(
     data.ok === true &&
