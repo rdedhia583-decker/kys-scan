@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
-<title>KYS EVENT - QR Ticket Check-In • FIXED</title>
+<title>KYS EVENT - QR Ticket Check-In</title>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -536,6 +536,32 @@ function checkIn(token){
   }
 
 
+  const timeout =
+    setTimeout(
+      function(){
+
+        if(finished) return;
+
+        finished = true;
+
+        cleanup();
+
+        setStatus(
+          "SERVER IS SLOW — PLEASE TRY THIS TICKET AGAIN",
+          "bad"
+        );
+
+        busy = false;
+
+        document
+          .getElementById("next")
+          .style.display="block";
+
+      },
+
+      15000
+    );
+
 
   /*
      IMPORTANT:
@@ -586,53 +612,13 @@ function handleResponse(data){
     .toUpperCase();
 
 
-  /* FIRST SCAN SUCCESS */
-
-  if(
-    data.ok === true &&
-    String(data.message || "")
-      .toUpperCase()
-      .includes("ENTRY ALLOWED")
-  ){
-
-    setStatus(
-
-      "VALID ENTRY ✓\n\n" +
-
-      (data.name || "") +
-
-      "\nTicket #" +
-
-      data.ticketNumber +
-
-      " of " +
-
-      data.quantity +
-
-      "\nBooking: " +
-
-      data.bookingId +
-
-      "\nChecked in by: " +
-
-      data.checkedInBy,
-
-      "ok"
-
-    );
-
-    finishScan();
-    return;
-  }
-
-
-  /* ALREADY USED — SECOND SCAN */
+  /* ALREADY USED */
 
   if(status === "USED"){
 
     setStatus(
 
-      "ALREADY CHECKED IN ✕\n\n" +
+      "ALREADY CHECKED IN\n" +
 
       (data.name || "") +
 
@@ -701,6 +687,46 @@ function handleResponse(data){
       "SERVER ERROR",
 
       "bad"
+
+    );
+
+    finishScan();
+    return;
+  }
+
+
+  /* SUCCESS */
+
+  if(
+    data.ok === true &&
+    String(data.message || "")
+      .toUpperCase()
+      .includes("ENTRY ALLOWED")
+  ){
+
+    setStatus(
+
+      "ENTRY ALLOWED ✓\n\n" +
+
+      (data.name || "") +
+
+      "\nTicket #" +
+
+      data.ticketNumber +
+
+      " of " +
+
+      data.quantity +
+
+      "\nBooking: " +
+
+      data.bookingId +
+
+      "\nChecked in by: " +
+
+      data.checkedInBy,
+
+      "ok"
 
     );
 
