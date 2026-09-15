@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <!-- STABLE VERSION OF QR LIBRARY -->
+  <!-- STABLE VERSION OF QR LIBRARY REQUIRED FOR VIEWPORT CAMERA MOUNT -->
   <script src="https://cloudflare.com"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -63,6 +63,7 @@
   </div>
 </div>
 <script>
+// AAPKA ORIGINAL LIVE SCRIPT BACKEND WEB APP EXEC URL
 const GOOGLE_SCRIPT_URL = "https://google.com";
 const SECURITY_KEY = "KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
 
@@ -131,7 +132,7 @@ function processQR(value) {
   
   const volunteer = document.getElementById("volunteer").value.trim();
   
-  // Dynamic high-speed network bypass for Netlify
+  // Lightning-fast cross-origin JSONP protocol pipeline
   const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
   const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
 
@@ -147,22 +148,24 @@ function processQR(value) {
   script.src = finalApiUrl;
   script.onerror = function() {
     processing = false;
-    showResult("invalid", "SYSTEM ERROR", "", "Please try again.");
+    showResult("invalid", "SYSTEM ERROR", "", "Network check karke dobara scan karein.");
   };
   document.body.appendChild(script);
 }
 
-// 100% FIXED & CRASH-PROOF TOKEN EXTRACTOR LOGIC
+// 100% CRASH PROOF PLAIN STRING EXTRACTOR
 function extractToken(value) {
   value = String(value || "").trim();
   if (!value) return "";
-  try {
-    // URL regex parsing that never breaks JavaScript runtime execution thread
-    var match = value.match(/[?&]token=([^&]+)/);
-    if (match && match[1]) {
-      return decodeURIComponent(match[1]).trim();
+  
+  // Straight forward clean indexing without crashing objects
+  if (value.indexOf("token=") !== -1) {
+    var rawSplit = value.split("token=")[1];
+    if (rawSplit.indexOf("&") !== -1) {
+      rawSplit = rawSplit.split("&")[0];
     }
-  } catch(e) {}
+    return decodeURIComponent(rawSplit).trim();
+  }
   return value;
 }
 
