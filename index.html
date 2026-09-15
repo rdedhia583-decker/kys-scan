@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <!-- STABLE INDEPENDENT LIBRARY SCRIPT -->
+  <!-- STABLE VERSION OF QR LIBRARY -->
   <script src="https://cloudflare.com"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -82,6 +82,7 @@ async function startCamera() {
   document.getElementById("stopBtn").style.display = "block";
   try {
     scanner = new Html5Qrcode("reader");
+    
     await scanner.start(
       { facingMode: "environment" },
       {
@@ -102,7 +103,7 @@ async function startCamera() {
   }
   catch(error) {
     document.getElementById("cameraError").style.display = "block";
-    document.getElementById("cameraError").innerHTML = "Camera permission issue. open via HTTPS or allow chrome permissions.";
+    document.getElementById("cameraError").innerHTML = "Camera permission issue. reload the echo URL.";
     document.getElementById("cameraCard").style.display = "none";
     document.getElementById("stopBtn").style.display = "none";
   }
@@ -122,6 +123,7 @@ function processQR(value) {
   showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
   
   const token = extractToken(value);
+  
   if (!token) {
     processing = false;
     showResult("invalid", "INVALID QR", "", "Valid KYS EVENT ticket scan karo.");
@@ -130,6 +132,7 @@ function processQR(value) {
   
   const volunteer = document.getElementById("volunteer").value.trim();
   
+  // Lightning-fast connection replacement for Netlify
   const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
   const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
 
@@ -145,25 +148,21 @@ function processQR(value) {
   script.src = finalApiUrl;
   script.onerror = function() {
     processing = false;
-    showResult("invalid", "SYSTEM ERROR", "", "Network check karke dobara scan karein.");
+    showResult("invalid", "SYSTEM ERROR", "", "Please try again.");
   };
   document.body.appendChild(script);
 }
 
-// 100% CRASH-PROOF TOKEN EXTRACTOR LOGIC
+// Terare pichle code ka exact safe extraction logic (Zero crash guarantee)
 function extractToken(value) {
   value = String(value || "").trim();
   if (!value) return "";
-  try {
+  
+  // Bilkul aapki original logic jo sahi chal rahi thi
+  if (value.startsWith("http://") || value.startsWith("https://")) {
     if (value.includes("token=")) {
-      // Direct URLSearchParams utility mapping (No more array split crashes)
-      const urlObj = new URL(value);
-      return urlObj.searchParams.get("token") || value;
-    }
-  } catch(e) {
-    // Fallback in case raw token is scanned directly
-    if (value.includes("?token=")) {
-      return value.split("?token=")[1].split("&")[0];
+      var match = value.match(/[?&]token=([^&]+)/);
+      return match ? match[1] : "";
     }
   }
   return value;
