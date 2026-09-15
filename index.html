@@ -377,7 +377,7 @@ async function stopScanner(){
    QR SCANNED
 ===================================================== */
 
-async function onScan(decodedText){
+function onScan(decodedText){
 
   if(busy) return;
 
@@ -412,20 +412,7 @@ async function onScan(decodedText){
     return;
   }
 
-  /*
-     IMPORTANT:
-     Pause camera IMMEDIATELY after QR detection.
-     Do not wait for the QR to disappear from the camera.
-  */
   busy = true;
-
-  try{
-    if(scanner){
-      await scanner.pause(true);
-    }
-  }catch(e){
-    console.warn("Scanner pause failed:", e);
-  }
 
   setStatus(
     "VERIFYING TICKET...",
@@ -560,17 +547,19 @@ function checkIn(token){
         cleanup();
 
         setStatus(
-          "SERVER IS TAKING LONGER THAN USUAL…\n\nPLEASE WAIT — DO NOT RESCAN",
-          "wait"
+          "SERVER IS SLOW — PLEASE TRY THIS TICKET AGAIN",
+          "bad"
         );
 
-        // Keep busy=true and camera paused.
-        // The original request may still be processing on Apps Script.
-        // This prevents a second scan from creating a duplicate attempt.
+        busy = false;
+
+        document
+          .getElementById("next")
+          .style.display="block";
 
       },
 
-      30000
+      8000
     );
 
 
@@ -767,7 +756,6 @@ function handleResponse(data){
 
 function finishScan(){
 
-  // Keep camera paused until volunteer presses SCAN NEXT TICKET.
   busy = false;
 
   document
@@ -780,7 +768,7 @@ function finishScan(){
    NEXT TICKET
 ===================================================== */
 
-async function resetForNext(){
+function resetForNext(){
 
   busy = false;
 
@@ -790,14 +778,6 @@ async function resetForNext(){
   document
     .getElementById("next")
     .style.display="none";
-
-  try{
-    if(scanner){
-      await scanner.resume();
-    }
-  }catch(e){
-    console.warn("Scanner resume failed:", e);
-  }
 
   setStatus(
     "READY — Scan next QR"
