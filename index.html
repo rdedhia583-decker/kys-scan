@@ -536,32 +536,6 @@ function checkIn(token){
   }
 
 
-  const timeout =
-    setTimeout(
-      function(){
-
-        if(finished) return;
-
-        finished = true;
-
-        cleanup();
-
-        setStatus(
-          "SERVER IS SLOW — PLEASE TRY THIS TICKET AGAIN",
-          "bad"
-        );
-
-        busy = false;
-
-        document
-          .getElementById("next")
-          .style.display="block";
-
-      },
-
-      8000
-    );
-
 
   /*
      IMPORTANT:
