@@ -269,19 +269,23 @@ async function startScanner(){
 
     );
 
+
     document
       .getElementById("start")
       .style.display="none";
 
+
     document
       .getElementById("stop")
       .style.display="block";
+
 
     setStatus(
       "READY — Scan QR"
     );
 
   }
+
 
   catch(error){
 
@@ -295,6 +299,7 @@ async function startScanner(){
       if(!cameras.length)
         throw new Error("No camera");
 
+
       await scanner.start(
 
         cameras[0].id,
@@ -307,19 +312,23 @@ async function startScanner(){
 
       );
 
+
       document
         .getElementById("start")
         .style.display="none";
 
+
       document
         .getElementById("stop")
         .style.display="block";
+
 
       setStatus(
         "READY — Scan QR"
       );
 
     }
+
 
     catch(e){
 
@@ -354,18 +363,22 @@ async function stopScanner(){
     try{
       scanner.clear();
     }catch(e){}
+
   }
 
   scanner = null;
   busy = false;
 
+
   document
     .getElementById("start")
     .style.display="block";
 
+
   document
     .getElementById("stop")
     .style.display="none";
+
 
   setStatus(
     "Scanner stopped"
@@ -389,18 +402,24 @@ function onScan(decodedText){
 
   const now = Date.now();
 
+
   if(
     raw === lastToken &&
     now - lastAt < 6000
   ){
+
     return;
+
   }
+
 
   lastToken = raw;
   lastAt = now;
 
+
   const token =
     extractToken(raw);
+
 
   if(!token){
 
@@ -410,18 +429,34 @@ function onScan(decodedText){
     );
 
     return;
+
   }
 
+
   busy = true;
+
+
+  /* CAMERA PAUSE IMMEDIATELY AFTER QR DETECTION */
+
+  if(scanner){
+
+    try{
+      scanner.pause(true);
+    }catch(e){}
+
+  }
+
 
   setStatus(
     "VERIFYING TICKET...",
     "wait"
   );
 
+
   document
     .getElementById("next")
     .style.display="none";
+
 
   checkIn(token);
 }
@@ -439,11 +474,13 @@ function extractToken(value){
 
   if(!value) return "";
 
+
   /*
      QR normally contains:
 
      https://.../exec?page=ticket&token=XXXXX_T1
   */
+
 
   try{
 
@@ -460,6 +497,7 @@ function extractToken(value){
 
       if(token)
         return token.trim();
+
     }
 
   }
@@ -472,6 +510,7 @@ function extractToken(value){
     );
 
   }
+
 
   /*
      Also support direct token:
@@ -495,6 +534,7 @@ function checkIn(token){
       .value
       .trim();
 
+
   const callbackName =
     "kysCheck_" +
     Date.now() +
@@ -503,8 +543,10 @@ function checkIn(token){
       Math.random()*100000
     );
 
+
   const script =
     document.createElement("script");
+
 
   let finished = false;
 
@@ -519,6 +561,7 @@ function checkIn(token){
       cleanup();
 
       handleResponse(response);
+
     };
 
 
@@ -533,11 +576,13 @@ function checkIn(token){
     try{
       delete window[callbackName];
     }catch(e){}
+
   }
 
 
   const timeout =
     setTimeout(
+
       function(){
 
         if(finished) return;
@@ -546,12 +591,15 @@ function checkIn(token){
 
         cleanup();
 
+
         setStatus(
           "SERVER IS SLOW — PLEASE TRY THIS TICKET AGAIN",
           "bad"
         );
 
+
         busy = false;
+
 
         document
           .getElementById("next")
@@ -560,6 +608,7 @@ function checkIn(token){
       },
 
       15000
+
     );
 
 
@@ -567,6 +616,7 @@ function checkIn(token){
      IMPORTANT:
      API KEY IS REQUIRED.
   */
+
 
   const url =
     API +
@@ -603,6 +653,7 @@ function handleResponse(data){
     );
 
     finishScan();
+
     return;
   }
 
@@ -612,90 +663,20 @@ function handleResponse(data){
     .toUpperCase();
 
 
-  /* ALREADY USED */
+  /* =================================================
+     SUCCESS — FIRST SCAN
 
-  if(status === "USED"){
+     IMPORTANT:
+     Backend first scan returns:
 
-    setStatus(
+     ok:true
+     status:"USED"
+     message:"ENTRY ALLOWED"
 
-      "ALREADY CHECKED IN\n" +
+     Therefore SUCCESS MUST BE CHECKED
+     BEFORE status === "USED".
+  ================================================= */
 
-      (data.name || "") +
-
-      "\nTicket #" +
-
-      (data.ticketNumber || "") +
-
-      "\nChecked in by: " +
-
-      (data.checkedInBy || "Unknown"),
-
-      "bad"
-
-    );
-
-    finishScan();
-    return;
-  }
-
-
-  /* PAYMENT NOT VERIFIED */
-
-  if(status === "NOT VALID"){
-
-    setStatus(
-
-      "PAYMENT NOT VERIFIED\n\n" +
-
-      (data.message || ""),
-
-      "bad"
-
-    );
-
-    finishScan();
-    return;
-  }
-
-
-  /* INVALID */
-
-  if(status === "INVALID"){
-
-    setStatus(
-
-      "INVALID TICKET\n\n" +
-
-      (data.message || ""),
-
-      "bad"
-
-    );
-
-    finishScan();
-    return;
-  }
-
-
-  /* SERVER ERROR */
-
-  if(status === "ERROR"){
-
-    setStatus(
-
-      data.message ||
-      "SERVER ERROR",
-
-      "bad"
-
-    );
-
-    finishScan();
-    return;
-  }
-
-
-  /* SUCCESS */
 
   if(
     data.ok === true &&
@@ -730,12 +711,120 @@ function handleResponse(data){
 
     );
 
+
     finishScan();
+
     return;
   }
 
 
-  /* UNKNOWN RESPONSE */
+  /* =================================================
+     ALREADY USED — SECOND SCAN
+  ================================================= */
+
+
+  if(status === "USED"){
+
+    setStatus(
+
+      "ALREADY CHECKED IN\n" +
+
+      (data.name || "") +
+
+      "\nTicket #" +
+
+      (data.ticketNumber || "") +
+
+      "\nChecked in by: " +
+
+      (data.checkedInBy || "Unknown"),
+
+      "bad"
+
+    );
+
+
+    finishScan();
+
+    return;
+  }
+
+
+  /* =================================================
+     PAYMENT NOT VERIFIED
+  ================================================= */
+
+
+  if(status === "NOT VALID"){
+
+    setStatus(
+
+      "PAYMENT NOT VERIFIED\n\n" +
+
+      (data.message || ""),
+
+      "bad"
+
+    );
+
+
+    finishScan();
+
+    return;
+  }
+
+
+  /* =================================================
+     INVALID
+  ================================================= */
+
+
+  if(status === "INVALID"){
+
+    setStatus(
+
+      "INVALID TICKET\n\n" +
+
+      (data.message || ""),
+
+      "bad"
+
+    );
+
+
+    finishScan();
+
+    return;
+  }
+
+
+  /* =================================================
+     SERVER ERROR
+  ================================================= */
+
+
+  if(status === "ERROR"){
+
+    setStatus(
+
+      data.message ||
+      "SERVER ERROR",
+
+      "bad"
+
+    );
+
+
+    finishScan();
+
+    return;
+  }
+
+
+  /* =================================================
+     UNKNOWN RESPONSE
+  ================================================= */
+
 
   setStatus(
 
@@ -745,6 +834,7 @@ function handleResponse(data){
     "bad"
 
   );
+
 
   finishScan();
 }
@@ -757,6 +847,7 @@ function handleResponse(data){
 function finishScan(){
 
   busy = false;
+
 
   document
     .getElementById("next")
@@ -775,9 +866,24 @@ function resetForNext(){
   lastToken = "";
   lastAt = 0;
 
+
+  /*
+     RESUME CAMERA FOR NEXT QR
+  */
+
+  if(scanner){
+
+    try{
+      scanner.resume();
+    }catch(e){}
+
+  }
+
+
   document
     .getElementById("next")
     .style.display="none";
+
 
   setStatus(
     "READY — Scan next QR"
