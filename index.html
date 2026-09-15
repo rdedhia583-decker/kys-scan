@@ -63,7 +63,6 @@
   </div>
 </div>
 <script>
-// AAPKA URL HAMESHA KI TARAH APNE SCRIPT KE MUTABIK RE-VERIFY RAKHEIN
 const GOOGLE_SCRIPT_URL = "https://google.com";
 const SECURITY_KEY = "KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
 
@@ -120,7 +119,6 @@ async function stopCamera() {
 
 function processQR(value) {
   stopCamera();
-  
   showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
   
   const token = extractToken(value);
@@ -132,7 +130,6 @@ function processQR(value) {
   
   const volunteer = document.getElementById("volunteer").value.trim();
   
-  // Lightning-Fast JSONP Execution Layer
   const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
   const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
 
@@ -153,20 +150,22 @@ function processQR(value) {
   document.body.appendChild(script);
 }
 
-// 100% BULLETPROOF SYNTAX FIX FOR URL EXTRACTOR
+// 100% CRASH-PROOF TOKEN EXTRACTOR LOGIC
 function extractToken(value) {
   value = String(value || "").trim();
   if (!value) return "";
   try {
-    if (value.indexOf("token=") !== -1) {
-      let parts = value.split("token=");
-      let tokenPart = parts[1]; // Corrected index parsing target
-      if (tokenPart.indexOf("&") !== -1) {
-        tokenPart = tokenPart.split("&")[0];
-      }
-      return decodeURIComponent(tokenPart).trim();
+    if (value.includes("token=")) {
+      // Direct URLSearchParams utility mapping (No more array split crashes)
+      const urlObj = new URL(value);
+      return urlObj.searchParams.get("token") || value;
     }
-  } catch(e) {}
+  } catch(e) {
+    // Fallback in case raw token is scanned directly
+    if (value.includes("?token=")) {
+      return value.split("?token=")[1].split("&")[0];
+    }
+  }
   return value;
 }
 
