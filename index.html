@@ -1,213 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <!-- STABLE VERSION OF QR LIBRARY REQUIRED FOR VIEWPORT CAMERA MOUNT -->
-  <script src="https://cloudflare.com"></script>
-  <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; background: #0b0d10; color: #fff; font-family: Arial, sans-serif; min-height: 100vh; }
-    .app { max-width: 520px; margin: auto; padding: 18px 15px 30px; }
-    .header { text-align: center; margin-bottom: 18px; }
-    .logo { width: 58px; height: 58px; margin: auto; border-radius: 18px; background: #fff; color: #111; display: flex; align-items: center; justify-content: center; font-size: 25px; font-weight: 900; }
-    h1 { margin: 12px 0 4px; font-size: 24px; }
-    .sub { color: #8e96a3; font-size: 13px; }
-    .card { background: #15181d; border: 1px solid #292e37; border-radius: 22px; padding: 16px; margin-bottom: 14px; }
-    label { display: block; color: #aab1bd; font-size: 12px; margin-bottom: 7px; }
-    input { width: 100%; padding: 15px; border-radius: 13px; border: 1px solid #343a45; background: #0c0f13; color: #fff; font-size: 16px; outline: none; }
-    input:focus { border-color: #fff; }
-    button { width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; }
-    .start { margin-top: 12px; background: #fff; color: #111; }
-    .stop { margin-top: 10px; background: #292e37; color: #fff; display: none; }
-    #reader { width: 100%; overflow: hidden; border-radius: 17px; background: #050607; border: none !important; }
-    #reader video { border-radius: 17px !important; width: 100% !important; object-fit: cover !important; }
-    .scan-text { text-align: center; color: #969eaa; font-size: 12px; margin-top: 12px; }
-    .result { display: none; border-radius: 22px; padding: 25px 18px; text-align: center; margin-top: 14px; }
-    .valid { background: #10291b; border: 1px solid #1d7540; }
-    .used { background: #351515; border: 1px solid #873434; }
-    .invalid { background: #321817; border: 1px solid #79312d; }
-    .verify { background: #322b12; border: 1px solid #806d22; }
-    .icon { width: 68px; height: 68px; margin: auto; border-radius: 50%; background: rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; }
-    .title { font-size: 24px; font-weight: 900; margin-top: 12px; }
-    .person { font-size: 18px; font-weight: 700; margin-top: 10px; }
-    .details { color: #b8bec7; font-size: 13px; line-height: 1.6; margin-top: 8px; }
-    .next { margin-top: 18px; background: #fff; color: #111; }
-    .error { color: #ff8c8c; text-align: center; font-size: 13px; line-height: 1.5; margin-top: 12px; display: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>KYS EVENT - QR Ticket Check-In</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0d11;color:#fff;font-family:Arial,sans-serif}
+.wrap{max-width:640px;margin:auto;padding:24px 18px}.card{background:#151922;border:1px solid #29303d;border-radius:26px;padding:28px 20px;text-align:center}
+h1{font-size:34px;margin:0 0 8px}.sub{font-size:19px;color:#9ba3b4;margin-bottom:30px}
+label{display:block;text-align:left;font-size:14px;font-weight:800;color:#aeb6c5;margin:0 0 10px 2px}
+input{width:100%;height:64px;border-radius:18px;background:#0c0f15;border:1px solid #343b49;color:#fff;padding:0 22px;font-size:21px;margin-bottom:14px}
+button{width:100%;height:64px;border:0;border-radius:18px;background:#252b38;color:#fff;font-size:20px;font-weight:800;margin:7px 0}
+button.stop{background:#252b38}button.next{background:#252b38}
+#reader{margin-top:20px;border-radius:24px;overflow:hidden;background:#000;min-height:80px}
+#status{margin-top:20px;border-radius:22px;padding:25px 16px;min-height:125px;white-space:pre-line;font-size:21px;font-weight:700;background:#171b24}
+#status.ok{background:#103a21;border:1px solid #2f8c51;color:#7dff9b}
+#status.bad{background:#351417;border:1px solid #7b3138;color:#fff}
+#status.wait{background:#3b3310;border:1px solid #806e24;color:#ffe88a}
+.title{font-size:29px;margin-bottom:10px}.detail{font-size:17px;font-weight:400;margin-top:12px;color:#ddd}
+.small{color:#777f8f;font-size:14px;margin-top:22px}
+</style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="logo">K</div>
-    <h1>KYS EVENT</h1>
-    <div class="sub">10 OCTOBER • 7 PM • MUMBAI</div>
-  </div>
-  <div class="card">
-    <label>VOLUNTEER NAME</label>
-    <input id="volunteer" type="text" placeholder="Enter your name" autocomplete="name">
-    <button class="start" onclick="startCamera()">📷 START SCANNER</button>
-    <button class="stop" id="stopBtn" onclick="stopCamera()">STOP CAMERA</button>
-    <div id="cameraError" class="error"></div>
-  </div>
-  <div class="card" id="cameraCard" style="display:none;">
-    <div id="reader"></div>
-    <div class="scan-text">QR code ko box ke andar rakho</div>
-  </div>
-  <div id="result" class="result">
-    <div id="icon" class="icon"></div>
-    <div id="title" class="title"></div>
-    <div id="person" class="person"></div>
-    <div id="details" class="details"></div>
-    <button class="next" onclick="nextScan()">SCAN NEXT TICKET</button>
-  </div>
-</div>
+<div class="wrap"><div class="card">
+<h1>KYS EVENT</h1><div class="sub">QR Ticket Check-In</div>
+<label>VOLUNTEER NAME</label>
+<input id="volunteer" placeholder="Volunteer Name" autocomplete="off">
+<button id="start" onclick="startScanner()">START SCANNER</button>
+<button id="stop" class="stop" onclick="stopScanner()" style="display:none">STOP SCANNER</button>
+<div id="reader"></div>
+<div id="status">Ready to scan</div>
+<button class="next" id="next" onclick="resetForNext()" style="display:none">SCAN NEXT TICKET</button>
+<div class="small">Keep this page open during entry.</div>
+</div></div>
+
 <script>
-// AAPKA ORIGINAL LIVE SCRIPT BACKEND WEB APP EXEC URL
-const GOOGLE_SCRIPT_URL = "https://google.com";
-const SECURITY_KEY = "KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
+const API="https://script.google.com/macros/s/AKfycbwzmhPRaHzTuSWV9ty-RY8ZAdqOyAkKeqGWvU1FiI-lNVsqRuouRhd7dUd1tTtVOlnr/exec";
+const KEY="KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
+let qr=null,busy=false,lastToken="",lastAt=0;
 
-let scanner = null;
-let scanning = false;
-let processing = false;
-
-async function startCamera() {
-  const volunteer = document.getElementById("volunteer").value.trim();
-  if (!volunteer) {
-    alert("Please enter volunteer name first.");
-    document.getElementById("volunteer").focus();
-    return;
-  }
-  document.getElementById("cameraError").style.display = "none";
-  document.getElementById("cameraCard").style.display = "block";
-  document.getElementById("stopBtn").style.display = "block";
-  try {
-    scanner = new Html5Qrcode("reader");
-    
-    await scanner.start(
-      { facingMode: "environment" },
-      {
-        fps: 15,
-        qrbox: function(width, height) {
-          const size = Math.floor(Math.min(width, height) * 0.75);
-          return { width: size, height: size };
-        }
-      },
-      function(decodedText) {
-        if (processing) return;
-        processing = true;
-        processQR(decodedText);
-      },
-      function(errorMessage) {}
-    );
-    scanning = true;
-  }
-  catch(error) {
-    document.getElementById("cameraError").style.display = "block";
-    document.getElementById("cameraError").innerHTML = "Camera permission issue. reload the echo URL.";
-    document.getElementById("cameraCard").style.display = "none";
-    document.getElementById("stopBtn").style.display = "none";
-  }
+function status(text,cls=""){
+ const e=document.getElementById("status"); e.className=cls; e.innerHTML=text;
 }
-
-async function stopCamera() {
-  if (scanner && scanning) {
-    try { await scanner.stop(); } catch(e) {}
-  }
-  scanning = false;
-  document.getElementById("stopBtn").style.display = "none";
-  document.getElementById("cameraCard").style.display = "none";
+function startScanner(){
+ if(qr)return;
+ const v=document.getElementById("volunteer").value.trim();
+ if(!v){status("Enter volunteer name first","bad");return;}
+ qr=new Html5Qrcode("reader"); status("Starting camera…","wait");
+ const cfg={fps:15,qrbox:{width:300,height:300},rememberLastUsedCamera:true};
+ qr.start({facingMode:"environment"},cfg,onScan,()=>{}).then(()=>{
+  document.getElementById("start").style.display="none";
+  document.getElementById("stop").style.display="block";
+  status("READY — Scan QR");
+ }).catch(async()=>{
+  try{
+   const cams=await Html5Qrcode.getCameras();
+   if(!cams.length)throw 0;
+   await qr.start(cams[0].id,cfg,onScan,()=>{});
+   document.getElementById("start").style.display="none";
+   document.getElementById("stop").style.display="block";
+   status("READY — Scan QR");
+  }catch(e){qr=null;status("Camera could not start. Allow camera permission and reload.","bad");}
+ });
 }
-
-function processQR(value) {
-  stopCamera();
-  showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
-  
-  const token = extractToken(value);
-  if (!token) {
-    processing = false;
-    showResult("invalid", "INVALID QR", "", "Valid KYS EVENT ticket scan karo.");
-    return;
-  }
-  
-  const volunteer = document.getElementById("volunteer").value.trim();
-  
-  // Lightning-fast cross-origin JSONP protocol pipeline
-  const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
-  const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
-
-  window[callbackName] = function(response) {
-    processing = false;
-    document.getElementById(callbackName).remove();
-    delete window[callbackName];
-    showResponse(response);
-  };
-
-  const script = document.createElement("script");
-  script.id = callbackName;
-  script.src = finalApiUrl;
-  script.onerror = function() {
-    processing = false;
-    showResult("invalid", "SYSTEM ERROR", "", "Network check karke dobara scan karein.");
-  };
-  document.body.appendChild(script);
+async function stopScanner(){
+ if(qr){try{await qr.stop()}catch(e){}try{qr.clear()}catch(e){}}
+ qr=null;busy=false;document.getElementById("start").style.display="block";document.getElementById("stop").style.display="none";status("Scanner stopped");
 }
-
-// 100% CRASH PROOF PLAIN STRING EXTRACTOR
-function extractToken(value) {
-  value = String(value || "").trim();
-  if (!value) return "";
-  
-  // Straight forward clean indexing without crashing objects
-  if (value.indexOf("token=") !== -1) {
-    var rawSplit = value.split("token=")[1];
-    if (rawSplit.indexOf("&") !== -1) {
-      rawSplit = rawSplit.split("&")[0];
-    }
-    return decodeURIComponent(rawSplit).trim();
-  }
-  return value;
+function onScan(text){
+ if(busy)return;
+ const token=String(text||"").trim(); if(!token)return;
+ const now=Date.now();
+ if(token===lastToken&&now-lastAt<6000)return;
+ lastToken=token;lastAt=now;busy=true;
+ status("VERIFYING TICKET…","wait");
+ document.getElementById("next").style.display="none";
+ sendCheckIn(token);
 }
-
-function showResponse(response) {
-  if (!response) {
-    showResult("invalid", "INVALID TICKET", "", "Ticket information nahi mili.");
-    return;
-  }
-  if (response.status === "USED" && response.message === "ALREADY CHECKED IN") {
-    showResult("used", "ALREADY CHECKED IN", response.name || "", "Checked in by: " + (response.checkedInBy || "Unknown"));
-    return;
-  }
-  if (response.status === "NOT VALID") {
-    showResult("verify", "PAYMENT NOT VERIFIED", response.name || "", response.message || "");
-    return;
-  }
-  if (response.status === "INVALID") {
-    showResult("invalid", "INVALID TICKET", "", response.message || "");
-    return;
-  }
-  if (response.ok === true) {
-    showResult("valid", "ENTRY ALLOWED", response.name || "", "Ticket #" + response.ticketNumber + " of " + response.quantity + "<br>Booking ID: " + response.bookingId);
-    return;
-  }
-  showResult("invalid", "INVALID TICKET", "", response.message || "Unknown error.");
+function sendCheckIn(token){
+ const cb="kys_"+Date.now()+"_"+Math.floor(Math.random()*99999);
+ const s=document.createElement("script");let done=false;
+ window[cb]=r=>{if(done)return;done=true;cleanup();show(r,false)};
+ const cleanup=()=>{clearTimeout(timer);try{s.remove()}catch(e){}try{delete window[cb]}catch(e){}};
+ const timer=setTimeout(()=>{if(done)return;done=true;cleanup();recoverStatus(token)},15000);
+ s.onerror=()=>{};s.src=API+"?api=checkin_jsonp&callback="+cb+"&key="+encodeURIComponent(KEY)+"&token="+encodeURIComponent(token)+"&volunteer="+encodeURIComponent(document.getElementById("volunteer").value.trim())+"&_="+Date.now();
+ document.body.appendChild(s);
 }
-
-function showResult(type, title, person, details) {
-  const result = document.getElementById("result");
-  result.className = "result " + type;
-  document.getElementById("icon").innerHTML = type === "valid" ? "✓" : type === "used" ? "!" : type === "verify" ? "⏳" : "×";
-  document.getElementById("title").textContent = title;
-  document.getElementById("person").textContent = person || "";
-  document.getElementById("details").innerHTML = details || "";
-  result.style.display = "block";
-  window.scrollTo({ top: 0, behavior: "smooth" });
+function recoverStatus(token){
+ status("VERIFYING RESULT…","wait");
+ const cb="kys_status_"+Date.now()+"_"+Math.floor(Math.random()*99999);
+ const s=document.createElement("script");let done=false;
+ window[cb]=r=>{if(done)return;done=true;cleanup();
+   if(r&&r.status==="USED"){show({ok:true,status:"RECOVERED",message:"ENTRY ALLOWED",name:r.name,bookingId:r.bookingId,ticketNumber:r.ticketNumber},true);}
+   else if(r&&r.status==="VALID"){show({ok:false,status:"ERROR",message:"Server response was delayed. Please scan this ticket once more.","name":""},true);}
+   else show(r||{status:"ERROR",message:"Server did not return a result."},true);
+ };
+ const cleanup=()=>{clearTimeout(timer);try{s.remove()}catch(e){}try{delete window[cb]}catch(e){}};
+ const timer=setTimeout(()=>{if(done)return;done=true;cleanup();status("SERVER IS SLOW — PLEASE WAIT A MOMENT AND THEN SCAN NEXT TICKET","wait");busy=false;document.getElementById("next").style.display="block"},10000);
+ s.onerror=()=>{};
+ s.src=API+"?api=checkin_status_jsonp&callback="+cb+"&key="+encodeURIComponent(KEY)+"&token="+encodeURIComponent(token)+"&_="+Date.now();
+ document.body.appendChild(s);
 }
-
-function nextScan() {
-  processing = false;
-  document.getElementById("result").style.display = "none";
-  startCamera();
+function show(r,recovered){
+ if(!r){status("SERVER DID NOT RETURN A RESULT","bad");busy=false;return;}
+ const st=String(r.status||"").toUpperCase();
+ if((st==="USED"||st==="RECOVERED")&&r.ok===false){status("ALREADY CHECKED IN"+(r.name?"\n"+r.name:""),"bad");}
+ else if(st==="RECOVERED"||r.ok===true&&/ENTRY ALLOWED/i.test(String(r.message||""))){status("ENTRY ALLOWED"+(r.name?"\n"+r.name:""),"ok");}
+ else {status(String(r.message||"TICKET NOT VALID"),"bad");}
+ busy=false;document.getElementById("next").style.display="block";
+}
+function resetForNext(){
+ busy=false;lastToken="";lastAt=0;document.getElementById("next").style.display="none";status("READY — Scan next QR");
 }
 </script>
 </body>
