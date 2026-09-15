@@ -123,7 +123,6 @@ function processQR(value) {
   showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
   
   const token = extractToken(value);
-  
   if (!token) {
     processing = false;
     showResult("invalid", "INVALID QR", "", "Valid KYS EVENT ticket scan karo.");
@@ -132,7 +131,7 @@ function processQR(value) {
   
   const volunteer = document.getElementById("volunteer").value.trim();
   
-  // Lightning-fast connection replacement for Netlify
+  // Dynamic high-speed network bypass for Netlify
   const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
   const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
 
@@ -153,18 +152,17 @@ function processQR(value) {
   document.body.appendChild(script);
 }
 
-// Terare pichle code ka exact safe extraction logic (Zero crash guarantee)
+// 100% FIXED & CRASH-PROOF TOKEN EXTRACTOR LOGIC
 function extractToken(value) {
   value = String(value || "").trim();
   if (!value) return "";
-  
-  // Bilkul aapki original logic jo sahi chal rahi thi
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    if (value.includes("token=")) {
-      var match = value.match(/[?&]token=([^&]+)/);
-      return match ? match[1] : "";
+  try {
+    // URL regex parsing that never breaks JavaScript runtime execution thread
+    var match = value.match(/[?&]token=([^&]+)/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1]).trim();
     }
-  }
+  } catch(e) {}
   return value;
 }
 
