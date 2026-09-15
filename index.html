@@ -377,7 +377,7 @@ async function stopScanner(){
    QR SCANNED
 ===================================================== */
 
-function onScan(decodedText){
+async function onScan(decodedText){
 
   if(busy) return;
 
@@ -412,7 +412,20 @@ function onScan(decodedText){
     return;
   }
 
+  /*
+     IMPORTANT:
+     Pause camera IMMEDIATELY after QR detection.
+     Do not wait for the QR to disappear from the camera.
+  */
   busy = true;
+
+  try{
+    if(scanner){
+      await scanner.pause(true);
+    }
+  }catch(e){
+    console.warn("Scanner pause failed:", e);
+  }
 
   setStatus(
     "VERIFYING TICKET...",
@@ -556,6 +569,12 @@ function checkIn(token){
         document
           .getElementById("next")
           .style.display="block";
+
+        if(scanner){
+          scanner.resume().catch(function(e){
+            console.warn("Scanner resume after timeout failed:", e);
+          });
+        }
 
       },
 
@@ -756,6 +775,7 @@ function handleResponse(data){
 
 function finishScan(){
 
+  // Keep camera paused until volunteer presses SCAN NEXT TICKET.
   busy = false;
 
   document
@@ -768,7 +788,7 @@ function finishScan(){
    NEXT TICKET
 ===================================================== */
 
-function resetForNext(){
+async function resetForNext(){
 
   busy = false;
 
@@ -778,6 +798,14 @@ function resetForNext(){
   document
     .getElementById("next")
     .style.display="none";
+
+  try{
+    if(scanner){
+      await scanner.resume();
+    }
+  }catch(e){
+    console.warn("Scanner resume failed:", e);
+  }
 
   setStatus(
     "READY — Scan next QR"
