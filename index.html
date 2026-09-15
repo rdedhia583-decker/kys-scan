@@ -560,25 +560,17 @@ function checkIn(token){
         cleanup();
 
         setStatus(
-          "SERVER IS SLOW — PLEASE TRY THIS TICKET AGAIN",
-          "bad"
+          "SERVER IS TAKING LONGER THAN USUAL…\n\nPLEASE WAIT — DO NOT RESCAN",
+          "wait"
         );
 
-        busy = false;
-
-        document
-          .getElementById("next")
-          .style.display="block";
-
-        if(scanner){
-          scanner.resume().catch(function(e){
-            console.warn("Scanner resume after timeout failed:", e);
-          });
-        }
+        // Keep busy=true and camera paused.
+        // The original request may still be processing on Apps Script.
+        // This prevents a second scan from creating a duplicate attempt.
 
       },
 
-      8000
+      30000
     );
 
 
