@@ -63,8 +63,8 @@
   </div>
 </div>
 <script>
-// EXPLICIT LIVE API VALUES MAPPED FROM SCRIPT CONTEXT
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzmhPRaHzTuSWV9ty-RY8ZAdqOyAkKeqGWvU1FiI-lNVsqRuouRhd7dUd1tTtVOlnr/exec";
+// APNA ACTIVE EXEC URL YAHAN RE-VERIFY KARLEIN
+const GOOGLE_SCRIPT_URL = "https://google.com";
 const SECURITY_KEY = "KOLbmD4g1LoiBKe6ooZK7LR_OmyBICce";
 
 let scanner = null;
@@ -121,7 +121,6 @@ async function stopCamera() {
 function processQR(value) {
   stopCamera();
   
-  // Dynamic Loading Layout Injection
   showResult("verify", "PROCESSING...", "Checking Database", "Google Sheet se verification chal raha hai...");
   
   const token = extractToken(value);
@@ -133,7 +132,7 @@ function processQR(value) {
   
   const volunteer = document.getElementById("volunteer").value.trim();
   
-  // Lightning-Fast JSONP Variable Tunnel Execution
+  // High-Speed JSONP Callback Engine
   const callbackName = "jsonp_checkin_" + Math.round(Math.random() * 1000000);
   const finalApiUrl = `${GOOGLE_SCRIPT_URL}?api=checkin_jsonp&key=${SECURITY_KEY}&token=${encodeURIComponent(token)}&volunteer=${encodeURIComponent(volunteer)}&callback=${callbackName}`;
 
@@ -154,13 +153,18 @@ function processQR(value) {
   document.body.appendChild(script);
 }
 
+// FIX: Dynamic safe execution block to capture full clean token string from URL context
 function extractToken(value) {
   value = String(value || "").trim();
   if (!value) return "";
   try {
-    if (value.startsWith("http://") || value.startsWith("https://")) {
-      const url = new URL(value);
-      return url.searchParams.get("token") || "";
+    if (value.indexOf("token=") !== -1) {
+      let parts = value.split("token=");
+      let tokenPart = parts[1];
+      if (tokenPart.indexOf("&") !== -1) {
+        tokenPart = tokenPart.split("&")[0];
+      }
+      return decodeURIComponent(tokenPart).trim();
     }
   } catch(e) {}
   return value;
